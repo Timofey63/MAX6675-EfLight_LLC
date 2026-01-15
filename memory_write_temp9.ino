@@ -332,179 +332,7 @@ void useProgram(int btn)
     lcd.clear();
     switch (stateProgram)
     {
-    case 5: {
-        int hour1307 = now.hour();
-        int min1307 = now.minute();
-        int sec1307 = now.second();
-
-        String h13 = String(hour1307); if (hour1307 < 10) { h13 = "0" + h13; }
-        String m13 = String(min1307); if (min1307 < 10) { m13 = "0" + m13; }
-        String s13 = String(sec1307); if (sec1307 < 10) { s13 = "0" + s13; }
-
-        lcd.setCursor(0, 0); lcd.print("Time         ");
-        lcd.setCursor(0, 1); // место, ряд
-        lcd.print(h13);lcd.print(":"); lcd.print(m13); lcd.print(":"); lcd.print(s13);
-        break;
-    }
-
-    case 4: {
-        // === НАСТРОЙКА ДАТЫ/ВРЕМЕНИ ===
-        static bool timeEditMode = false;   // в режиме редактирования или нет
-        static int fieldIndex = 0;          // 0=год, 1=мес, 2=день, 3=час, 4=мин, 5=сек
-        static unsigned long lastChange = 0;
-        const unsigned long debounce = 200;
-
-        // текущее время
-        int year1307 = now.year();
-        int month1307 = now.month();
-        int day1307 = now.day();
-        int hour1307 = now.hour();
-        int min1307 = now.minute();
-        int sec1307 = now.second();
-
-        // === ВХОД / ВЫХОД В РЕЖИМ ===
-        if (!timeEditMode && (btn == BTN_OK || btn == BTN_RESET) && millis() - lastChange > debounce) {
-            timeEditMode = true;
-            fieldIndex = 0; // начинаем с года
-            lcd.clear();
-            lastChange = millis();
-        }
-
-        // === ЕСЛИ В РЕЖИМЕ РЕДАКТИРОВАНИЯ ===
-        if (timeEditMode) {
-            // смена поля (по кнопке PLUS)
-            if (btn == BTN_PLUS && millis() - lastChange > debounce) {
-                fieldIndex++;
-                if (fieldIndex > 5) { // прошли все поля — выходим
-                    timeEditMode = false;
-                    lcd.clear();
-                }
-                lastChange = millis();
-            }
-
-            // изменение значения (OK / RESET)
-            if (millis() - lastChange > debounce) {
-                if (btn == BTN_OK) {
-                    switch (fieldIndex) {
-                    case 0: year1307++; break;
-                    case 1: month1307++; break;
-                    case 2: day1307++; break;
-                    case 3: hour1307++; break;
-                    case 4: min1307++; break;
-                    case 5: sec1307++; break;
-                    }
-                    lastChange = millis();
-                }
-                if (btn == BTN_RESET) {
-                    switch (fieldIndex) {
-                    case 0: year1307--; break;
-                    case 1: month1307--; break;
-                    case 2: day1307--; break;
-                    case 3: hour1307--; break;
-                    case 4: min1307--; break;
-                    case 5: sec1307--; break;
-                    }
-                    lastChange = millis();
-                }
-            }
-
-            // нормализация значений
-            auto daysInMonth = [](int y, int m)->int {
-                const int md[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
-                int d = md[(m - 1) % 12];
-                if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0))) d = 29;
-                return d;
-            };
-
-            if (year1307 < 2000) year1307 = 2000;
-            if (year1307 > 2099) year1307 = 2099;
-
-            if (month1307 < 1) month1307 = 12;
-            if (month1307 > 12) month1307 = 1;
-
-            int maxDay = daysInMonth(year1307, month1307);
-            if (day1307 < 1) day1307 = maxDay;
-            if (day1307 > maxDay) day1307 = 1;
-
-            if (hour1307 < 0) hour1307 = 23;
-            if (hour1307 > 23) hour1307 = 0;
-
-            if (min1307 < 0) min1307 = 59;
-            if (min1307 > 59) min1307 = 0;
-
-            if (sec1307 < 0) sec1307 = 59;
-            if (sec1307 > 59) sec1307 = 0;
-
-            // применяем изменения
-            rtc.adjust(DateTime(year1307, month1307, day1307, hour1307, min1307, sec1307));
-            now = rtc.now();
-
-            // === ВЫВОД НА LCD ===
-            lcd.setCursor(0, 0);
-            switch (fieldIndex) {
-            case 0: lcd.print("Change YEAR   "); break;
-            case 1: lcd.print("Change MONTH  "); break;
-            case 2: lcd.print("Change DAY    "); break;
-            case 3: lcd.print("Change HOUR   "); break;
-            case 4: lcd.print("Change MINUTE "); break;
-            case 5: lcd.print("Change SECOND "); break;
-            }
-
-            lcd.setCursor(0, 1);
-            char buf[17];
-            switch (fieldIndex) {
-            case 0: snprintf(buf, sizeof(buf), "%04d", now.year()); break;
-            case 1: snprintf(buf, sizeof(buf), "%02d", now.month()); break;
-            case 2: snprintf(buf, sizeof(buf), "%02d", now.day()); break;
-            case 3: snprintf(buf, sizeof(buf), "%02d", now.hour()); break;
-            case 4: snprintf(buf, sizeof(buf), "%02d", now.minute()); break;
-            case 5: snprintf(buf, sizeof(buf), "%02d", now.second()); break;
-            }
-            lcd.print(buf);
-        }
-
-        // === ЕСЛИ НЕ В РЕЖИМЕ РЕДАКТИРОВАНИЯ ===
-        else {
-            lcd.setCursor(0, 0);
-            lcd.print("Set clock      ");
-            lcd.setCursor(0, 1);
-            lcd.print("Press + or -   ");
-        }
-
-        break;
-    }
-
-    case 2: {
-        int h = RECORD_DURATION / (60UL * 60UL * 1000UL);//в часах
-
-        lcd.setCursor(0, 0); lcd.print("Period write: "); lcd.print(h); lcd.print("h");
-        lcd.setCursor(0, 1); lcd.print("Press + or -   ");
-        if (btn == BTN_OK)
-        {
-            if (RECORD_DURATION < 8UL * 60UL * 60UL * 1000UL) RECORD_DURATION += 60UL * 60UL * 1000UL;
-        }
-        if (btn == BTN_RESET)
-        {
-            if (RECORD_DURATION > 60UL * 60UL * 1000UL) RECORD_DURATION -= 60UL * 60UL * 1000UL;
-        }
-        break;
-    }
-    case 3: {
-        int m = RECORD_INTERVAL / 60000UL; // минуты
-
-        lcd.setCursor(0, 0); lcd.print("interval: "); lcd.print(m); lcd.print("m");
-        lcd.setCursor(0, 1); lcd.print("Press + or -   ");
-        if (btn == BTN_OK)
-        {
-            if (RECORD_INTERVAL < 15UL * 60UL * 1000UL) RECORD_INTERVAL += 60UL * 1000UL;
-        }
-        if (btn == BTN_RESET)
-        {
-            if (RECORD_INTERVAL > 60UL * 1000UL) RECORD_INTERVAL -= 60UL * 1000UL;
-        }
-        break;
-    }
-    case 0: {
+        case 0: {
         int h = RECORD_DURATION / (60UL * 60UL * 1000UL);//в часах
         int m = RECORD_INTERVAL / 60000UL; // минуты
         lcd.setCursor(0, 0); lcd.print("START  ");
@@ -523,7 +351,7 @@ void useProgram(int btn)
         }
         break;
     }
-    case 1: {
+        case 1: {
         btnPlusWriteActive = false;
         btnMinusWriteActive = false;
         lcd.setCursor(0, 0); lcd.print("Output Data  ");
@@ -534,6 +362,176 @@ void useProgram(int btn)
             lcd.print("Working...     ");
             printRecordedData();
         }
+        break;
+    }
+        case 2: {
+            int h = RECORD_DURATION / (60UL * 60UL * 1000UL);//в часах
+
+            lcd.setCursor(0, 0); lcd.print("Period write: "); lcd.print(h); lcd.print("h");
+            lcd.setCursor(0, 1); lcd.print("Press + or -   ");
+            if (btn == BTN_OK)
+            {
+                if (RECORD_DURATION < 8UL * 60UL * 60UL * 1000UL) RECORD_DURATION += 60UL * 60UL * 1000UL;
+            }
+            if (btn == BTN_RESET)
+            {
+                if (RECORD_DURATION > 60UL * 60UL * 1000UL) RECORD_DURATION -= 60UL * 60UL * 1000UL;
+            }
+            break;
+        }
+        case 3: {
+            int m = RECORD_INTERVAL / 60000UL; // минуты
+
+            lcd.setCursor(0, 0); lcd.print("interval: "); lcd.print(m); lcd.print("m");
+            lcd.setCursor(0, 1); lcd.print("Press + or -   ");
+            if (btn == BTN_OK)
+            {
+                if (RECORD_INTERVAL < 15UL * 60UL * 1000UL) RECORD_INTERVAL += 60UL * 1000UL;
+            }
+            if (btn == BTN_RESET)
+            {
+                if (RECORD_INTERVAL > 60UL * 1000UL) RECORD_INTERVAL -= 60UL * 1000UL;
+            }
+            break;
+        }
+        case 4: {
+            // === НАСТРОЙКА ДАТЫ/ВРЕМЕНИ ===
+            static bool timeEditMode = false;   // в режиме редактирования или нет
+            static int fieldIndex = 0;          // 0=год, 1=мес, 2=день, 3=час, 4=мин, 5=сек
+            static unsigned long lastChange = 0;
+            const unsigned long debounce = 200;
+
+            // текущее время
+            int year1307 = now.year();
+            int month1307 = now.month();
+            int day1307 = now.day();
+            int hour1307 = now.hour();
+            int min1307 = now.minute();
+            int sec1307 = now.second();
+
+            // === ВХОД / ВЫХОД В РЕЖИМ ===
+            if (!timeEditMode && (btn == BTN_OK || btn == BTN_RESET) && millis() - lastChange > debounce) {
+                timeEditMode = true;
+                fieldIndex = 0; // начинаем с года
+                lcd.clear();
+                lastChange = millis();
+            }
+
+            // === ЕСЛИ В РЕЖИМЕ РЕДАКТИРОВАНИЯ ===
+            if (timeEditMode) {
+                // смена поля (по кнопке PLUS)
+                if (btn == BTN_PLUS && millis() - lastChange > debounce) {
+                    fieldIndex++;
+                    if (fieldIndex > 5) { // прошли все поля — выходим
+                        timeEditMode = false;
+                        lcd.clear();
+                    }
+                    lastChange = millis();
+                }
+
+                // изменение значения (OK / RESET)
+                if (millis() - lastChange > debounce) {
+                    if (btn == BTN_OK) {
+                        switch (fieldIndex) {
+                        case 0: year1307++; break;
+                        case 1: month1307++; break;
+                        case 2: day1307++; break;
+                        case 3: hour1307++; break;
+                        case 4: min1307++; break;
+                        case 5: sec1307++; break;
+                        }
+                        lastChange = millis();
+                    }
+                    if (btn == BTN_RESET) {
+                        switch (fieldIndex) {
+                        case 0: year1307--; break;
+                        case 1: month1307--; break;
+                        case 2: day1307--; break;
+                        case 3: hour1307--; break;
+                        case 4: min1307--; break;
+                        case 5: sec1307--; break;
+                        }
+                        lastChange = millis();
+                    }
+                }
+
+                // нормализация значений
+                auto daysInMonth = [](int y, int m)->int {
+                    const int md[] = { 31,28,31,30,31,30,31,31,30,31,30,31 };
+                    int d = md[(m - 1) % 12];
+                    if (m == 2 && ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0))) d = 29;
+                    return d;
+                };
+
+                if (year1307 < 2000) year1307 = 2000;
+                if (year1307 > 2099) year1307 = 2099;
+
+                if (month1307 < 1) month1307 = 12;
+                if (month1307 > 12) month1307 = 1;
+
+                int maxDay = daysInMonth(year1307, month1307);
+                if (day1307 < 1) day1307 = maxDay;
+                if (day1307 > maxDay) day1307 = 1;
+
+                if (hour1307 < 0) hour1307 = 23;
+                if (hour1307 > 23) hour1307 = 0;
+
+                if (min1307 < 0) min1307 = 59;
+                if (min1307 > 59) min1307 = 0;
+
+                if (sec1307 < 0) sec1307 = 59;
+                if (sec1307 > 59) sec1307 = 0;
+
+                // применяем изменения
+                rtc.adjust(DateTime(year1307, month1307, day1307, hour1307, min1307, sec1307));
+                now = rtc.now();
+
+                // === ВЫВОД НА LCD ===
+                lcd.setCursor(0, 0);
+                switch (fieldIndex) {
+                case 0: lcd.print("Change YEAR   "); break;
+                case 1: lcd.print("Change MONTH  "); break;
+                case 2: lcd.print("Change DAY    "); break;
+                case 3: lcd.print("Change HOUR   "); break;
+                case 4: lcd.print("Change MINUTE "); break;
+                case 5: lcd.print("Change SECOND "); break;
+                }
+
+                lcd.setCursor(0, 1);
+                char buf[17];
+                switch (fieldIndex) {
+                case 0: snprintf(buf, sizeof(buf), "%04d", now.year()); break;
+                case 1: snprintf(buf, sizeof(buf), "%02d", now.month()); break;
+                case 2: snprintf(buf, sizeof(buf), "%02d", now.day()); break;
+                case 3: snprintf(buf, sizeof(buf), "%02d", now.hour()); break;
+                case 4: snprintf(buf, sizeof(buf), "%02d", now.minute()); break;
+                case 5: snprintf(buf, sizeof(buf), "%02d", now.second()); break;
+                }
+                lcd.print(buf);
+            }
+
+            // === ЕСЛИ НЕ В РЕЖИМЕ РЕДАКТИРОВАНИЯ ===
+            else {
+                lcd.setCursor(0, 0);
+                lcd.print("Set clock      ");
+                lcd.setCursor(0, 1);
+                lcd.print("Press + or -   ");
+            }
+
+            break;
+        }
+        case 5: {
+        int hour1307 = now.hour();
+        int min1307 = now.minute();
+        int sec1307 = now.second();
+
+        String h13 = String(hour1307); if (hour1307 < 10) { h13 = "0" + h13; }
+        String m13 = String(min1307); if (min1307 < 10) { m13 = "0" + m13; }
+        String s13 = String(sec1307); if (sec1307 < 10) { s13 = "0" + s13; }
+
+        lcd.setCursor(0, 0); lcd.print("Time         ");
+        lcd.setCursor(0, 1); // место, ряд
+        lcd.print(h13);lcd.print(":"); lcd.print(m13); lcd.print(":"); lcd.print(s13);
         break;
     }
     }
