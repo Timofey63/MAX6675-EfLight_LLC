@@ -332,25 +332,51 @@ void useProgram(int btn)
     lcd.clear();
     switch (stateProgram)
     {
-        case 0: {
-        int h = RECORD_DURATION / (60UL * 60UL * 1000UL);//в часах
-        int m = RECORD_INTERVAL / 60000UL; // минуты
-        lcd.setCursor(0, 0); lcd.print("START  ");
-        lcd.print(h); lcd.print("h/");
-        lcd.print(m); lcd.print("m");
-        lcd.setCursor(0, 1); lcd.print("Press + and -  ");
-        if (btn == BTN_OK) btnPlusWriteActive = true;
-        if (btn == BTN_RESET) btnMinusWriteActive = true;
-        if (btnPlusWriteActive && btnMinusWriteActive)
+        case 0: 
         {
-            lcd.setCursor(0, 1);
-            lcd.print("Erase!!!!      ");
-            startRecording();
-            btnPlusWriteActive = false;
-            btnMinusWriteActive = false;
+        //int h = RECORD_DURATION / (60UL * 60UL * 1000UL);//в часах
+        //int m = RECORD_INTERVAL / 60000UL; // минуты
+        //lcd.setCursor(0, 0); lcd.print("START  ");
+        //lcd.print(h); lcd.print("h/");
+        //lcd.print(m); lcd.print("m");
+        //lcd.setCursor(0, 1); lcd.print("Press + and -  ");
+        //if (btn == BTN_OK) btnPlusWriteActive = true;
+        //if (btn == BTN_RESET) btnMinusWriteActive = true;
+        //if (btnPlusWriteActive && btnMinusWriteActive)
+        //{
+        //    lcd.setCursor(0, 1);
+        //    lcd.print("Erase!!!!      ");
+        //    startRecording();
+        //    btnPlusWriteActive = false;
+        //    btnMinusWriteActive = false;
+        //}
+            lcd.clear();
+            lcd.setCursor(0, 0);
+
+            UpdateTemperature();
+
+            printLcdTemps();
+
+            int h = RECORD_DURATION / (60UL * 60UL * 1000UL);
+            int m = RECORD_INTERVAL / 60000UL;
+            lcd.setCursor(0, 1); lcd.print("+ and -  ");
+            lcd.print(h); lcd.print("h/");
+            lcd.print(m); lcd.print("m");
+
+            //action
+            if (btn == BTN_OK) btnPlusWriteActive = true;
+            if (btn == BTN_RESET) btnMinusWriteActive = true;
+            if (btnPlusWriteActive && btnMinusWriteActive)
+            {
+                lcd.setCursor(0, 1);
+                lcd.print("Erase!!!!      ");
+                startRecording();
+                btnPlusWriteActive = false;
+                btnMinusWriteActive = false;
+            }
+
+            break;
         }
-        break;
-    }
         case 1: {
         btnPlusWriteActive = false;
         btnMinusWriteActive = false;
